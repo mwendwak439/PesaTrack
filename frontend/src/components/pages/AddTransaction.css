@@ -1,0 +1,149 @@
+
+/* Main page */
+.add-transaction {
+  min-height: 100vh;
+  background: #f3f6fa;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Form heading */
+.add-transaction h2 {
+  color: #176b50;
+  font-size: 28px;
+  margin-bottom: 25px;
+}
+
+/* Form container */
+.add-transaction form {
+  width: 100%;
+  max-width: 550px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Labels */
+.add-transaction label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  margin-top: 15px;
+}
+
+
+/* Input fields, dropdowns and textarea */
+.add-transaction input,
+.add-transaction select,
+.add-transaction textarea {
+  display: block;
+  width: 100%;
+  padding: 13px 14px;
+  margin-bottom: 8px;
+
+  background-color: #ffffff;
+  color: #222222;
+
+  border: 1px solid #b8c2cc;
+  border-radius: 8px;
+
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  font-weight: 500;
+
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Placeholder text */
+.add-transaction input::placeholder,
+.add-transaction textarea::placeholder {
+  color: #777777;
+  opacity: 1;
+}
+
+/* When clicking inside an input */
+.add-transaction input:focus,
+.add-transaction select:focus,
+.add-transaction textarea:focus {
+  background-color: #ffffff;
+  color: #222222;
+  border: 2px solid #176b50;
+  box-shadow: 0 0 0 3px rgba(23, 107, 80, 0.12);
+}
+
+/* Dropdown options */
+.add-transaction select option {
+  background-color: #ffffff;
+  color: #222222;
+}
+
+/* Textarea */
+.add-transaction textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Focus effect */
+.add-transaction input:focus,
+.add-transaction select:focus,
+.add-transaction textarea:focus {
+  border-color: #176b50;
+  box-shadow: 0 0 0 3px rgba(23, 107, 80, 0.1);
+}
+
+/* Description field */
+.add-transaction textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Submit button */
+.add-transaction button {
+  margin-top: 25px;
+  padding: 13px;
+  background: #176b50;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.add-transaction button:hover {
+  background: #10543e;
+}
+
+.add-transaction button:disabled {
+  background: #8ca99d;
+  cursor: not-allowed;
+}
+
+/* Success and error messages */
+.add-transaction p {
+  color: #176b50;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .add-transaction {
+    padding: 25px 15px;
+  }
+
+  .add-transaction form {
+    padding: 20px;
+  }
+
+  .add-transaction h2 {
+    font-size: 23px;
+  }
+}
