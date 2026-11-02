@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 @ensure_csrf_cookie
 def csrf_token_view(request):
@@ -64,3 +66,11 @@ class LogoutView(APIView):
     def post(self, request):
         logout(request)
         return Response({'message': 'Logout successful!'})
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    return Response({
+        'username': request.user.username,
+        'first_name': request.user.first_name,
+    })

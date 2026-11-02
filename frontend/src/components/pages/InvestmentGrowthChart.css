@@ -1,0 +1,43 @@
+
+.growth-chart-card {
+    width: 100%;
+    background: #ffffff;
+    padding: 24px;
+    margin: 25px 0;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.growth-chart-card h3 {
+    color: #176b50;
+    margin-bottom: 10px;
+}
+
+.growth-chart-card p {
+    color: #666666;
+    margin-bottom: 20px;
+}
+
+.growth-chart {
+    width: 100%;
+    height: 350px;
+    min-height: 350px;
+}
+
+.chart-message {
+    color: #b42318;
+    margin: 20px 0;
+}
+
+@media (max-width: 480px) {
+    .growth-chart-card {
+        padding: 14px;
+    }
+
+    .growth-chart {
+        height: 280px;
+        min-height: 280px;
+    }
+}

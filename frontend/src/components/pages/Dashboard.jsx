@@ -11,6 +11,8 @@ function Dashboard() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
 
   const navigate = useNavigate();
 
@@ -121,6 +123,43 @@ const handleDelete = async (id) => {
 
     fetchTransactions();
   }, []);
+// Fetch the logged-in user's details
+useEffect(() => {
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch(`${API_URL}/me/`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Could not fetch user details.');
+      }
+
+      const data = await response.json();
+
+      setUsername(data.username);
+      setFirstName(data.first_name);
+    } catch (err) {
+      console.error('User details error:', err);
+    }
+  };
+
+  fetchCurrentUser();
+}, []);
+
+// Get a greeting based on the current time
+const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return 'Good morning';
+  } else if (hour < 17) {
+    return 'Good afternoon';
+  } else {
+    return 'Good evening';
+  }
+};
 
   // Calculate total income
   const totalIncome = transactions
@@ -148,20 +187,49 @@ const handleDelete = async (id) => {
 
       {/* Dashboard Header */}
       <header className="dashboard-header">
-        <div>
-          <h1>PesaTrack</h1>
-          <p>Welcome to your personal finance dashboard.</p>
-        </div>
+       <div>
+  <h1>PesaTrack</h1>
 
-        <div>
-          <Link to="/add-transaction">
-            Add Transaction
-          </Link>
+  <h2>
+    {getGreeting()}, {firstName || username || 'there'}! 👋
+  </h2>
 
-          <button onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
+  <p>Welcome back to PesaTrack. Here's an overview of your finances.</p>
+</div>
+
+      
+<div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap',
+  }}
+>
+  <Link to="/add-transaction">
+    Add Transaction
+  </Link>
+
+  <Link
+    to="/investments"
+    style={{
+      display: 'inline-block',
+      backgroundColor: '#176b50',
+      color: '#ffffff',
+      padding: '10px 16px',
+      borderRadius: '7px',
+      textDecoration: 'none',
+      fontWeight: '600',
+    }}
+  >
+    📈 Investments
+  </Link>
+
+  <button onClick={handleLogout}>
+    Logout
+  </button>
+</div>
+
       </header>
 
       {/* Summary Cards */}

@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
+import './AddTransaction.css';
 const API_URL = 'http://localhost:8000/api';
 
 function EditTransaction() {

@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import './Login.css';
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -11,7 +11,8 @@ function Login() {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
-
+    const location = useLocation();
+const successMessage = location.state?.message || '';
     const getCsrfToken = () => {
         const cookie = document.cookie
             .split('; ')
@@ -26,7 +27,6 @@ function Login() {
         setLoading(true);
 
         try {
-            // Request a CSRF cookie from Django.
             await fetch(`${API_URL}/csrf/`, {
                 method: 'GET',
                 credentials: 'include',
@@ -40,7 +40,6 @@ function Login() {
                 );
             }
 
-            // Send login details to Django.
             const response = await fetch(`${API_URL}/login/`, {
                 method: 'POST',
                 credentials: 'include',
@@ -59,7 +58,6 @@ function Login() {
                 );
             }
 
-            // Login succeeded.
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Unable to connect to the server.');
@@ -71,43 +69,72 @@ function Login() {
     return (
         <div className="auth-container">
             <form className="auth-form" onSubmit={handleSubmit}>
-                <h1>PesaTrack</h1>
-                <p>Welcome back! Log in to manage your money.</p>
+                <div className="auth-brand">
+                    <div className="auth-logo">P</div>
+                    <h1>PesaTrack</h1>
+                </div>
 
-                {error && (
-                    <p role="alert" style={{ color: 'red' }}>
-                        {error}
-                    </p>
-                )}
+                <h2 className="auth-title">Welcome back!</h2>
 
-                <label htmlFor="username">Username</label>
-                <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    placeholder="Enter your username"
-                    autoComplete="username"
-                    required
-                />
+                <p className="auth-subtitle">
+                    Log in to manage your money.
+                </p>
 
-                <label htmlFor="password">Password</label>
-                <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    required
-                />
+              {successMessage && (
+    <div className="auth-success" role="status">
+        {successMessage}
+    </div>
+)}
 
-                <button type="submit" disabled={loading}>
+{error && (
+    <div className="auth-error" role="alert">
+        {error}
+    </div>
+)}
+
+                <div className="auth-field">
+                    <label htmlFor="username">Username</label>
+
+                    <input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={(event) =>
+                            setUsername(event.target.value)
+                        }
+                        placeholder="Enter your username"
+                        autoComplete="username"
+                        required
+                    />
+                </div>
+
+                <div className="auth-field">
+                    <label htmlFor="password">Password</label>
+
+                    <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(event) =>
+                            setPassword(event.target.value)
+                        }
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        required
+                    />
+                </div>
+
+                <button
+                    className="auth-button"
+                    type="submit"
+                    disabled={loading}
+                >
                     {loading ? 'Logging in...' : 'Log In'}
                 </button>
 
-                <p>
-                    Don't have an account? <Link to="/register">Register</Link>
+                <p className="auth-switch">
+                    Don't have an account?{' '}
+                    <Link to="/register">Register here</Link>
                 </p>
             </form>
         </div>
