@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import ExpensePieChart from './ExpensePieChart';
 import IncomeExpenseLineChart from './IncomeExpenseLineChart';
@@ -13,8 +13,30 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Fetch the actual wallet balance from Django
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await fetch(`${API_URL}/wallet/`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Could not load wallet balance.');
+      }
+
+      const data = await response.json();
+
+      setWalletBalance(Number(data.wallet_balance));
+    } catch (err) {
+      console.error('Wallet balance error:', err);
+    }
+  };
 
   // Logout function
   const handleLogout = async () => {
@@ -50,54 +72,56 @@ function Dashboard() {
       alert('Something went wrong while logging out.');
     }
   };
-  
-// Delete transaction function
-const handleDelete = async (id) => {
-  const confirmDelete = window.confirm(
-    'Are you sure you want to delete this transaction?'
-  );
 
-  if (!confirmDelete) return;
-
-  try {
-    const csrfResponse = await fetch(`${API_URL}/csrf/`, {
-      credentials: 'include',
-    });
-
-    if (!csrfResponse.ok) {
-      throw new Error('Could not get CSRF token.');
-    }
-
-    const csrfToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('csrftoken='))
-      ?.split('=')[1];
-
-    const response = await fetch(`${API_URL}/transactions/${id}/`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'X-CSRFToken': csrfToken,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Could not delete transaction.');
-    }
-
-    // Remove deleted transaction from the dashboard
-    setTransactions((previousTransactions) =>
-      previousTransactions.filter((item) => item.id !== id)
+  // Delete transaction function
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete this transaction?'
     );
 
-    alert('Transaction deleted successfully!');
+    if (!confirmDelete) return;
 
-  } catch (error) {
-    console.error('Delete error:', error);
-    alert(error.message);
-  }
-};
+    try {
+      const csrfResponse = await fetch(`${API_URL}/csrf/`, {
+        credentials: 'include',
+      });
 
+      if (!csrfResponse.ok) {
+        throw new Error('Could not get CSRF token.');
+      }
+
+      const csrfToken = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+
+      const response = await fetch(`${API_URL}/transactions/${id}/`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': csrfToken,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Could not delete transaction.');
+      }
+
+      // Remove deleted transaction from the dashboard
+      setTransactions((previousTransactions) =>
+        previousTransactions.filter((item) => item.id !== id)
+      );
+
+      // Refresh wallet balance after deleting transaction
+      await fetchWalletBalance();
+
+      alert('Transaction deleted successfully!');
+
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(error.message);
+    }
+  };
 
   // Fetch transactions from Django
   useEffect(() => {
@@ -114,6 +138,7 @@ const handleDelete = async (id) => {
 
         const data = await response.json();
         setTransactions(data);
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -123,43 +148,50 @@ const handleDelete = async (id) => {
 
     fetchTransactions();
   }, []);
-// Fetch the logged-in user's details
-useEffect(() => {
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch(`${API_URL}/me/`, {
-        method: 'GET',
-        credentials: 'include',
-      });
 
-      if (!response.ok) {
-        throw new Error('Could not fetch user details.');
+  // Refresh wallet balance whenever the dashboard route is visited
+  useEffect(() => {
+    fetchWalletBalance();
+  }, [location.pathname]);
+
+  // Fetch the logged-in user's details
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/me/`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not fetch user details.');
+        }
+
+        const data = await response.json();
+
+        setUsername(data.username);
+        setFirstName(data.first_name);
+
+      } catch (err) {
+        console.error('User details error:', err);
       }
+    };
 
-      const data = await response.json();
+    fetchCurrentUser();
+  }, []);
 
-      setUsername(data.username);
-      setFirstName(data.first_name);
-    } catch (err) {
-      console.error('User details error:', err);
+  // Get a greeting based on the current time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return 'Good morning';
+    } else if (hour < 17) {
+      return 'Good afternoon';
+    } else {
+      return 'Good evening';
     }
   };
-
-  fetchCurrentUser();
-}, []);
-
-// Get a greeting based on the current time
-const getGreeting = () => {
-  const hour = new Date().getHours();
-
-  if (hour < 12) {
-    return 'Good morning';
-  } else if (hour < 17) {
-    return 'Good afternoon';
-  } else {
-    return 'Good evening';
-  }
-};
 
   // Calculate total income
   const totalIncome = transactions
@@ -170,9 +202,6 @@ const getGreeting = () => {
   const totalExpenses = transactions
     .filter((item) => item.transaction_type === 'Expense')
     .reduce((total, item) => total + Number(item.amount), 0);
-
-  // Calculate available balance
-  const balance = totalIncome - totalExpenses;
 
   if (loading) {
     return <p>Loading your transactions...</p>;
@@ -187,53 +216,54 @@ const getGreeting = () => {
 
       {/* Dashboard Header */}
       <header className="dashboard-header">
-       <div>
-  <h1>PesaTrack</h1>
+        <div>
+          <h1>PesaTrack</h1>
 
-  <h2>
-    {getGreeting()}, {firstName || username || 'there'}! 👋
-  </h2>
+          <h2>
+            {getGreeting()}, {firstName || username || 'there'}! 👋
+          </h2>
 
-  <p>Welcome back to PesaTrack. Here's an overview of your finances.</p>
-</div>
+          <p>
+            Welcome back to PesaTrack. Here's an overview of your finances.
+          </p>
+        </div>
 
-      
-<div
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    flexWrap: 'wrap',
-  }}
->
-  <Link to="/add-transaction">
-    Add Transaction
-  </Link>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Link to="/add-transaction">
+            Add Transaction
+          </Link>
 
-  <Link
-    to="/investments"
-    style={{
-      display: 'inline-block',
-      backgroundColor: '#176b50',
-      color: '#ffffff',
-      padding: '10px 16px',
-      borderRadius: '7px',
-      textDecoration: 'none',
-      fontWeight: '600',
-    }}
-  >
-    📈 Investments
-  </Link>
+          <Link
+            to="/investments"
+            style={{
+              display: 'inline-block',
+              backgroundColor: '#176b50',
+              color: '#ffffff',
+              padding: '10px 16px',
+              borderRadius: '7px',
+              textDecoration: 'none',
+              fontWeight: '600',
+            }}
+          >
+            📈 Investments
+          </Link>
 
-  <button onClick={handleLogout}>
-    Logout
-  </button>
-</div>
-
+          <button onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Summary Cards */}
       <section className="summary-cards">
+
         <div className="summary-card">
           <h3>Total Income</h3>
           <h2>KES {totalIncome.toFixed(2)}</h2>
@@ -246,19 +276,18 @@ const getGreeting = () => {
 
         <div className="summary-card">
           <h3>Available Balance</h3>
-          <h2>KES {balance.toFixed(2)}</h2>
+          <h2>KES {walletBalance.toFixed(2)}</h2>
         </div>
+
       </section>
 
       {/* Charts Section */}
       <section className="charts-section">
 
-        {/* Expense Pie Chart */}
         <div className="chart-card">
           <ExpensePieChart transactions={transactions} />
         </div>
 
-        {/* Income and Expenses Line Graph */}
         <div className="chart-card">
           <IncomeExpenseLineChart transactions={transactions} />
         </div>
@@ -274,33 +303,35 @@ const getGreeting = () => {
         ) : (
           transactions.map((transaction) => (
             <div key={transaction.id} className="transaction-item">
+
               <div>
                 <strong>{transaction.title}</strong>
+
                 <p>
                   {transaction.category} - {transaction.date}
                 </p>
               </div>
 
-<div className="transaction-actions">
-  <strong>
-    {transaction.transaction_type === 'Income' ? '+' : '-'}
-    KES {Number(transaction.amount).toFixed(2)}
-  </strong>
+              <div className="transaction-actions">
+                <strong>
+                  {transaction.transaction_type === 'Income' ? '+' : '-'}
+                  KES {Number(transaction.amount).toFixed(2)}
+                </strong>
 
-  <Link
-    to={`/edit-transaction/${transaction.id}`}
-    className="edit-button"
-  >
-    Edit
-  </Link>
+                <Link
+                  to={`/edit-transaction/${transaction.id}`}
+                  className="edit-button"
+                >
+                  Edit
+                </Link>
 
-  <button
-    className="delete-button"
-    onClick={() => handleDelete(transaction.id)}
-  >
-    Delete
-  </button>
-</div>
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(transaction.id)}
+                >
+                  Delete
+                </button>
+              </div>
 
             </div>
           ))

@@ -98,42 +98,75 @@ class InvestmentListCreateView(APIView):
         serializer = InvestmentSerializer(investments, many=True)
         return Response(serializer.data)
     
+    
     def post(self, request):
-        name = request.data.get('name')
-        investment_type = request.data.get('investment_type')
-        description = request.data.get('description', '')
-        date = request.data.get('date')
-
-        if not name or not investment_type or not date:
+        # Get the amount entered by the user
+        try:
+            amount = Decimal(str(request.data.get('amount', '')))
+        except (InvalidOperation, TypeError, ValueError):
             return Response(
-                {'error': 'Name, investment type and date are required.'},
+                {'error': 'Please enter a valid investment amount.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        valid_types = dict(Investment.INVESTMENT_TYPES)
-
-        if investment_type not in valid_types:
+        # Validate the amount
+        if not amount.is_finite() or amount <= 0:
             return Response(
-                {'error': 'Invalid investment type.'},
+                {'error': 'Investment amount must be greater than zero.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        investment = Investment.objects.create(
-            user=request.user,
-            name=name,
-            investment_type=investment_type,
-            description=description,
-            date=date,
-            amount_invested=Decimal('0.00'),
-            current_value=Decimal('0.00')
-        )
+        if amount != amount.quantize(Decimal('0.01')):
+            return Response(
+                {'error': 'Investment amount cannot have more than two decimal places.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        serializer = InvestmentSerializer(investment)
+        with transaction.atomic():
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+            # Find the user's existing investment account
+            investment = Investment.objects.select_for_update().filter(
+                user=request.user
+            ).order_by('created_at').first()
+
+            # Create the default account if one does not exist
+            if investment is None:
+                investment = Investment.objects.create(
+                    user=request.user,
+                    name='PesaTrack Investment Account',
+                    investment_type='Other',
+                    amount_invested=Decimal('0.00'),
+                    current_value=Decimal('0.00'),
+                    date=timezone.localdate()
+                )
+
+            # Check the user's available wallet balance
+            wallet_balance = get_wallet_balance(request.user)
+
+            if amount > wallet_balance:
+                return Response(
+                    {'error': 'Insufficient wallet balance.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Add money to the investment account
+            investment.amount_invested += amount
+            investment.current_value += amount
+            investment.save()
+
+            # Record the deposit
+            InvestmentActivity.objects.create(
+                investment=investment,
+                activity_type='Deposit',
+                amount=amount,
+                date=timezone.localdate()
+            )
+
+        return Response({
+            'message': 'Investment deposit successful.',
+            'wallet_balance': str(get_wallet_balance(request.user)),
+            'investment': InvestmentSerializer(investment).data
+        }, status=status.HTTP_200_OK)
 
 
 # --------------------------------

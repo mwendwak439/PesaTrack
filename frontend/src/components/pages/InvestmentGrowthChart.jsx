@@ -71,11 +71,27 @@ function InvestmentGrowthChart({ investments }) {
                     });
                 });
 
-                const chartData = Array.from(dateMap.values()).sort(
-                    (a, b) => a.date.localeCompare(b.date)
-                );
+let chartData = Array.from(dateMap.values()).sort(
+    (a, b) => a.date.localeCompare(b.date)
+);
 
-                setHistory(chartData);
+// If there is no history yet, use the current investment values.
+if (chartData.length === 0 && investments.length > 0) {
+    chartData = [
+        {
+            date: new Date().toISOString().slice(0, 10),
+            ...Object.fromEntries(
+                investments.map((investment) => [
+                    `investment_${investment.id}`,
+                    Number(investment.current_value),
+                ])
+            ),
+        },
+    ];
+}
+
+setHistory(chartData);
+
             } catch (err) {
                 if (!cancelled) {
                     setError(err.message);
@@ -149,13 +165,16 @@ function InvestmentGrowthChart({ investments }) {
                             dataKey="date"
                             tick={{ fontSize: 12 }}
                         />
-
-                        <YAxis
-                            width={100}
-                            tickFormatter={(value) =>
-                                `KES ${Number(value).toLocaleString()}`
-                            }
-                        />
+<YAxis
+    width={100}
+    domain={[
+        0,
+        (dataMax) => Math.ceil(dataMax * 1.2 / 100) * 100,
+    ]}
+    tickFormatter={(value) =>
+        `KES ${Number(value).toLocaleString()}`
+    }
+/>
 
                         <Tooltip
                             formatter={(value) => [
@@ -173,8 +192,8 @@ function InvestmentGrowthChart({ investments }) {
                                 name={investment.name}
                                 connectNulls
                                 strokeWidth={2}
-                                dot={{ r: 4 }}
-                                activeDot={{ r: 6 }}
+                                dot={{ r: 5 }}
+                                activeDot={{ r: 7 }}
                             />
                         ))}
                     </LineChart>

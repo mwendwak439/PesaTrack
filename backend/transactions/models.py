@@ -96,6 +96,12 @@ class Investment(models.Model):
 
     date = models.DateField()
 
+
+    last_growth_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -105,11 +111,7 @@ class Investment(models.Model):
     def profit_or_loss(self):
         return self.current_value - self.amount_invested
 
-    last_growth_date = models.DateField(
-    null=True,
-    blank=True
-)
-
+ 
     
     
 class InvestmentActivity(models.Model):

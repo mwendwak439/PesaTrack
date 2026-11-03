@@ -1,4 +1,3 @@
-
 import InvestmentGrowthChart from './InvestmentGrowthChart';
 import './Investments.css';
 import React, { useEffect, useState } from 'react';
@@ -32,10 +31,12 @@ function Investments() {
     const [error, setError] = useState('');
 
     const [selectedInvestment, setSelectedInvestment] = useState(null);
-    const [actionType, setActionType] = useState('');
     const [amount, setAmount] = useState('');
     const [actionMessage, setActionMessage] = useState('');
+
     const [submitting, setSubmitting] = useState(false);
+    const [showInvestmentForm, setShowInvestmentForm] = useState(false);
+    const [creatingInvestment, setCreatingInvestment] = useState(false);
 
     // Fetch investments and portfolio information
     const fetchInvestmentData = async () => {
@@ -69,12 +70,79 @@ function Investments() {
         }
     };
 
+    // Invest money into the PesaTrack investment account
+    const handleCreateInvestment = async (e) => {
+        e.preventDefault();
+
+        if (!amount || Number(amount) <= 0) {
+            setActionMessage('Please enter a valid amount.');
+            return;
+        }
+
+        setCreatingInvestment(true);
+        setActionMessage('');
+
+        try {
+            const csrfResponse = await fetch(`${API_URL}/csrf/`, {
+                credentials: 'include',
+            });
+
+            if (!csrfResponse.ok) {
+                throw new Error('Could not obtain CSRF token.');
+            }
+
+            const csrfToken = getCookie('csrftoken');
+
+            if (!csrfToken) {
+                throw new Error(
+                    'CSRF token not found. Please log in again.'
+                );
+            }
+
+            const response = await fetch(`${API_URL}/investments/`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error ||
+                    data.detail ||
+                    'Investment deposit failed.'
+                );
+            }
+
+            setActionMessage(
+                data.message || 'Investment deposit successful!'
+            );
+
+            setAmount('');
+            setShowInvestmentForm(false);
+
+            await fetchInvestmentData();
+
+        } catch (err) {
+            setActionMessage(err.message);
+        } finally {
+            setCreatingInvestment(false);
+        }
+    };
+
     useEffect(() => {
         fetchInvestmentData();
     }, []);
 
-    // Handle deposits and withdrawals
-    const handleInvestmentAction = async (e) => {
+    // Handle investment withdrawals
+    const handleWithdrawal = async (e) => {
         e.preventDefault();
 
         if (!selectedInvestment) {
@@ -102,18 +170,17 @@ function Investments() {
                 );
             }
 
-            // Read the CSRF token
             const csrfToken = getCookie('csrftoken');
 
             if (!csrfToken) {
                 throw new Error(
-                    'CSRF token not found. Please log in again and retry.'
+                    'CSRF token not found. Please log in again.'
                 );
             }
 
-            // Send the deposit or withdrawal request
+            // Send withdrawal request
             const response = await fetch(
-                `${API_URL}/investments/${selectedInvestment.id}/${actionType}/`,
+                `${API_URL}/investments/${selectedInvestment.id}/withdraw/`,
                 {
                     method: 'POST',
                     credentials: 'include',
@@ -134,20 +201,17 @@ function Investments() {
                     data.error ||
                     data.detail ||
                     data.message ||
-                    'The transaction failed.'
+                    'Withdrawal failed.'
                 );
             }
 
             setActionMessage(
-                data.message ||
-                `${actionType === 'deposit' ? 'Deposit' : 'Withdrawal'} successful!`
+                data.message || 'Withdrawal successful!'
             );
 
             setAmount('');
             setSelectedInvestment(null);
-            setActionType('');
 
-            // Refresh investment and portfolio information
             await fetchInvestmentData();
 
         } catch (err) {
@@ -197,10 +261,19 @@ function Investments() {
         );
     }
 
+    const totalCurrentValue = investments.reduce(
+        (total, item) => total + Number(item.current_value),
+        0
+    );
+
+    const totalProfitLoss = investments.reduce(
+        (total, item) => total + Number(item.profit_or_loss),
+        0
+    );
+
     return (
         <div className="investments-page">
 
-            {/* Back to the main dashboard */}
             <button
                 type="button"
                 className="back-dashboard-button"
@@ -231,14 +304,7 @@ function Investments() {
                         <h4>Current Value</h4>
                         <h2>
                             KES{' '}
-                            {investments
-                                .reduce(
-                                    (total, item) =>
-                                        total +
-                                        Number(item.current_value),
-                                    0
-                                )
-                                .toLocaleString()}
+                            {totalCurrentValue.toLocaleString()}
                         </h2>
                     </div>
 
@@ -246,14 +312,7 @@ function Investments() {
                         <h4>Profit / Loss</h4>
                         <h2>
                             KES{' '}
-                            {investments
-                                .reduce(
-                                    (total, item) =>
-                                        total +
-                                        Number(item.profit_or_loss),
-                                    0
-                                )
-                                .toLocaleString()}
+                            {totalProfitLoss.toLocaleString()}
                         </h2>
                     </div>
 
@@ -292,6 +351,70 @@ function Investments() {
 
             <h3>Your Investments</h3>
 
+            {/* Main investment button */}
+            <button
+                type="button"
+                onClick={() => {
+                    setShowInvestmentForm(!showInvestmentForm);
+                    setActionMessage('');
+                    setSelectedInvestment(null);
+                }}
+            >
+                {showInvestmentForm ? 'Cancel' : '+ Invest Money'}
+            </button>
+
+            {/* Invest money form */}
+            {showInvestmentForm && (
+                <div className="investment-form">
+
+                    <h3>Invest Money</h3>
+
+                    <p>
+                        Enter the amount you want to transfer from your
+                        PesaTrack wallet into your investment account.
+                    </p>
+
+                    <form onSubmit={handleCreateInvestment}>
+
+                        <label>Investment Amount (KES)</label>
+
+                        <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="Enter amount"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            required
+                            disabled={creatingInvestment}
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={creatingInvestment}
+                        >
+                            {creatingInvestment
+                                ? 'Processing...'
+                                : 'Invest Now'}
+                        </button>
+
+                        <button
+                            type="button"
+                            disabled={creatingInvestment}
+                            onClick={() => {
+                                setShowInvestmentForm(false);
+                                setAmount('');
+                                setActionMessage('');
+                            }}
+                        >
+                            Cancel
+                        </button>
+
+                    </form>
+                </div>
+            )}
+
+            {/* Investment account */}
             {investments.length === 0 ? (
                 <p>You have not added any investments yet.</p>
             ) : (
@@ -333,21 +456,9 @@ function Investments() {
                                 type="button"
                                 onClick={() => {
                                     setSelectedInvestment(investment);
-                                    setActionType('deposit');
                                     setAmount('');
                                     setActionMessage('');
-                                }}
-                            >
-                                Deposit
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelectedInvestment(investment);
-                                    setActionType('withdraw');
-                                    setAmount('');
-                                    setActionMessage('');
+                                    setShowInvestmentForm(false);
                                 }}
                             >
                                 Withdraw
@@ -358,21 +469,19 @@ function Investments() {
                 ))
             )}
 
-            {/* Deposit and withdrawal form */}
+            {/* Withdrawal form */}
             {selectedInvestment && (
                 <div className="investment-form">
 
-                    <h3>
-                        {actionType === 'deposit'
-                            ? 'Deposit Money'
-                            : 'Withdraw Money'}
-                    </h3>
+                    <h3>Withdraw Money</h3>
 
                     <p>
                         Investment: {selectedInvestment.name}
                     </p>
 
-                    <form onSubmit={handleInvestmentAction}>
+                    <form onSubmit={handleWithdrawal}>
+
+                        <label>Withdrawal Amount (KES)</label>
 
                         <input
                             type="number"
@@ -380,9 +489,7 @@ function Investments() {
                             step="0.01"
                             placeholder="Enter amount (KES)"
                             value={amount}
-                            onChange={(e) =>
-                                setAmount(e.target.value)
-                            }
+                            onChange={(e) => setAmount(e.target.value)}
                             required
                             disabled={submitting}
                         />
@@ -393,11 +500,7 @@ function Investments() {
                         >
                             {submitting
                                 ? 'Processing...'
-                                : `Confirm ${
-                                      actionType === 'deposit'
-                                          ? 'Deposit'
-                                          : 'Withdrawal'
-                                  }`}
+                                : 'Confirm Withdrawal'}
                         </button>
 
                         <button
