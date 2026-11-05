@@ -121,7 +121,9 @@ class InvestmentListCreateView(APIView):
                 {'error': 'Investment amount cannot have more than two decimal places.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
+        
+        # Update existing investment growth before adding new money
+        update_investment_growth(request.user)
         with transaction.atomic():
 
             # Find the user's existing investment account

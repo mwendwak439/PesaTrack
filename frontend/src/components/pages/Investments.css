@@ -72,7 +72,7 @@
     margin-top: 20px;
 }
 
-.investment-actions button,
+
 .investment-form button {
     background: #176b50;
     color: white;
@@ -125,3 +125,38 @@
 .back-dashboard-button:hover {
     background: #12543f;
 }
+.invest-money-button {
+    background-color:#16a34a;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 15px 0;
+}
+
+.invest-money-button:hover {
+    background-color: #15803d;
+    transform: translateY(-2px);
+     box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+
+}
+
+.invest-money-button:active {
+    transform: translateY(0);
+}
+.withdraw-investment-button{
+ background-color:#16a34a;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 15px 0;
+ }

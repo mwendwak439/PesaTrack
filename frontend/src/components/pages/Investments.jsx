@@ -271,6 +271,13 @@ function Investments() {
         0
     );
 
+// Calculate total profit/loss percentage
+const totalInvested = Number(portfolio?.total_invested || 0);
+
+const totalProfitLossPercentage = totalInvested > 0
+    ? (totalProfitLoss / totalInvested) * 100
+    : 0;
+
     return (
         <div className="investments-page">
 
@@ -300,21 +307,31 @@ function Investments() {
                         </h2>
                     </div>
 
-                    <div className="summary-card">
-                        <h4>Current Value</h4>
-                        <h2>
-                            KES{' '}
-                            {totalCurrentValue.toLocaleString()}
-                        </h2>
-                    </div>
+                   <div className="summary-card">
+    <h4>Profit / Loss</h4>
 
-                    <div className="summary-card">
-                        <h4>Profit / Loss</h4>
-                        <h2>
-                            KES{' '}
-                            {totalProfitLoss.toLocaleString()}
-                        </h2>
-                    </div>
+    <h2>
+        KES {totalProfitLoss.toLocaleString('en-KE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}
+    </h2>
+
+    <p>
+        {totalProfitLoss > 0
+            ? 'Profit'
+            : totalProfitLoss < 0
+                ? 'Loss'
+                : 'No gain or loss'
+        }
+    </p>
+
+    <p>
+        {totalProfitLossPercentage.toFixed(2)}%
+    </p>
+</div>
+
+                    
 
                     <div className="summary-card">
                         <h4>Annual Rate</h4>
@@ -354,6 +371,7 @@ function Investments() {
             {/* Main investment button */}
             <button
                 type="button"
+             className="invest-money-button"
                 onClick={() => {
                     setShowInvestmentForm(!showInvestmentForm);
                     setActionMessage('');
@@ -453,6 +471,7 @@ function Investments() {
                         <div className="investment-actions">
 
                             <button
+                            className='withdraw-investment-button'
                                 type="button"
                                 onClick={() => {
                                     setSelectedInvestment(investment);
