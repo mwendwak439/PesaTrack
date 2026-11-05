@@ -76,8 +76,14 @@ function AddTransaction() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(JSON.stringify(data));
-      }
+    const errorMessage = Object.values(data)
+        .flat()
+        .join(' ');
+
+    throw new Error(
+        errorMessage || 'Something went wrong. Please try again.'
+    );
+}
 
       setMessage('Transaction added successfully!');
 

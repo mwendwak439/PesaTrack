@@ -99,7 +99,6 @@
     cursor: pointer;
     transition: background 0.2s ease;
 }
-
 .add-transaction button:hover:not(:disabled) {
     background: #16652F;
 }

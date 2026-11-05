@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import TransactionListCreateView, TransactionDetailView,  WalletBalanceView,InvestmentListCreateView,InvestmentDepositView,InvestmentWithdrawView, PortfolioRateView,InvestmentHistoryView
+from .views import TransactionListCreateView, TransactionDetailView,  WalletBalanceView,InvestmentListCreateView,InvestmentDepositView,InvestmentWithdrawView, PortfolioRateView,InvestmentHistoryView, PortfolioHistoryView
 from .auth_views import RegisterView,LoginView, LogoutView, csrf_token_view, current_user
 
 urlpatterns = [
@@ -26,5 +26,10 @@ path(
     'investments/<int:pk>/history/',
     InvestmentHistoryView.as_view(),
     name='investment-history'
+),
+path(
+    'portfolio/history/',
+    PortfolioHistoryView.as_view(),
+    name='portfolio-history'
 )
 ]

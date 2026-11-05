@@ -74,10 +74,17 @@ function Investments() {
     const handleCreateInvestment = async (e) => {
         e.preventDefault();
 
-        if (!amount || Number(amount) <= 0) {
-            setActionMessage('Please enter a valid amount.');
-            return;
-        }
+       if (
+    !amount ||
+    !Number.isFinite(Number(amount)) ||
+    Number(amount) <= 0 ||
+    !/^\d+(\.\d{1,2})?$/.test(amount)
+) {
+    setActionMessage(
+        'Please enter a valid amount with a maximum of two decimal places.'
+    );
+    return;
+}
 
         setCreatingInvestment(true);
         setActionMessage('');
@@ -150,10 +157,17 @@ function Investments() {
             return;
         }
 
-        if (!amount || Number(amount) <= 0) {
-            setActionMessage('Please enter a valid amount.');
-            return;
-        }
+       if (
+    !amount ||
+    !Number.isFinite(Number(amount)) ||
+    Number(amount) <= 0 ||
+    !/^\d+(\.\d{1,2})?$/.test(amount)
+) {
+    setActionMessage(
+        'Please enter a valid amount with a maximum of two decimal places.'
+    );
+    return;
+}
 
         setSubmitting(true);
         setActionMessage('');

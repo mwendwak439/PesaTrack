@@ -747,3 +747,120 @@ textarea:focus-visible {
 .investments-button:hover {
   background-color: #12543f;
 }
+
+/* ========================================
+   DAY 8 - DASHBOARD RESPONSIVENESS
+======================================== */
+
+/* Prevent dashboard content from overflowing */
+.dashboard,
+.dashboard-header,
+.summary-card,
+.chart-card,
+.transactions-section {
+    min-width: 0;
+}
+
+/* Tablet screens */
+@media (max-width: 900px) {
+    .dashboard-header {
+        align-items: flex-start;
+    }
+
+    .dashboard-header-actions {
+        justify-content: flex-start;
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        width: 100%;
+    }
+}
+
+/* Mobile screens */
+@media (max-width: 600px) {
+    .dashboard {
+        padding: 14px;
+    }
+
+    .dashboard-header {
+        padding: 18px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 23px;
+    }
+
+    .dashboard-header h2 {
+        font-size: 20px;
+    }
+
+    .dashboard-header-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dashboard-header-actions a,
+    .dashboard-header-actions button,
+    .dashboard-header > div:last-child a,
+    .dashboard-header > div:last-child button {
+        width: 100%;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card h2 {
+        font-size: 22px;
+    }
+
+    .chart-card {
+        padding: 14px;
+    }
+
+    .transactions-section {
+        padding: 16px;
+    }
+
+    .transaction-item {
+        align-items: stretch;
+    }
+
+    .transaction-actions {
+        justify-content: space-between;
+    }
+
+    .transaction-actions button,
+    .transaction-actions a {
+        min-width: 0;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+    .dashboard {
+        padding: 10px;
+    }
+
+    .dashboard-header {
+        padding: 14px;
+    }
+
+    .summary-card {
+        padding: 16px;
+    }
+
+    .transaction-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

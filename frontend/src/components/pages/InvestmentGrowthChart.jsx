@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+
 import {
     LineChart,
     Line,
@@ -27,70 +28,30 @@ function InvestmentGrowthChart({ investments }) {
             setError('');
 
             try {
-                const results = await Promise.all(
-                    investments.map(async (investment) => {
-                        const response = await fetch(
-                            `${API_URL}/investments/${investment.id}/history/`,
-                            {
-                                credentials: 'include',
-                            }
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(
-                                `Could not load history for ${investment.name}.`
-                            );
-                        }
-
-                        const data = await response.json();
-
-                        return {
-                            id: investment.id,
-                            name: investment.name,
-                            history: data.history || [],
-                        };
-                    })
+                const response = await fetch(
+                    `${API_URL}/portfolio/history/`,
+                    {
+                        credentials: 'include',
+                    }
                 );
+
+                if (!response.ok) {
+                    throw new Error('Could not load portfolio history.');
+                }
+
+                const data = await response.json();
 
                 if (cancelled) return;
 
-                // Combine recorded investment values by date.
-                const dateMap = new Map();
+                // Convert timestamps and values into chart-friendly numbers.
+                const formattedHistory = data
+                    .map((point) => ({
+                        date: new Date(point.date).getTime(),
+                        value: Number(point.value),
+                    }))
+                    .sort((a, b) => a.date - b.date);
 
-                results.forEach((investment) => {
-                    investment.history.forEach((point) => {
-                        if (!dateMap.has(point.date)) {
-                            dateMap.set(point.date, {
-                                date: point.date,
-                            });
-                        }
-
-                        dateMap.get(point.date)[
-                            `investment_${investment.id}`
-                        ] = Number(point.value);
-                    });
-                });
-
-let chartData = Array.from(dateMap.values()).sort(
-    (a, b) => a.date.localeCompare(b.date)
-);
-
-// If there is no history yet, use the current investment values.
-if (chartData.length === 0 && investments.length > 0) {
-    chartData = [
-        {
-            date: new Date().toISOString().slice(0, 10),
-            ...Object.fromEntries(
-                investments.map((investment) => [
-                    `investment_${investment.id}`,
-                    Number(investment.current_value),
-                ])
-            ),
-        },
-    ];
-}
-
-setHistory(chartData);
+                setHistory(formattedHistory);
 
             } catch (err) {
                 if (!cancelled) {
@@ -103,16 +64,12 @@ setHistory(chartData);
             }
         }
 
-        if (investments.length > 0) {
-            fetchHistory();
-        } else {
-            setHistory([]);
-            setLoading(false);
-        }
+        fetchHistory();
 
         return () => {
             cancelled = true;
         };
+
     }, [investments]);
 
     if (loading) {
@@ -128,7 +85,7 @@ setHistory(chartData);
         );
     }
 
-    if (investments.length === 0 || history.length === 0) {
+    if (history.length === 0) {
         return (
             <div className="growth-chart-card">
                 <h3>Investment Growth</h3>
@@ -142,14 +99,17 @@ setHistory(chartData);
 
     return (
         <div className="growth-chart-card">
-            <h3>Investment Growth</h3>
+
+            <h3>Total Investment Growth</h3>
 
             <p>
-                Track recorded changes in your investment values over time.
+                Track the combined value of all your investments over time.
             </p>
 
             <div className="growth-chart">
+
                 <ResponsiveContainer width="100%" height="100%">
+
                     <LineChart
                         data={history}
                         margin={{
@@ -159,45 +119,66 @@ setHistory(chartData);
                             bottom: 10,
                         }}
                     >
+
                         <CartesianGrid strokeDasharray="3 3" />
 
                         <XAxis
                             dataKey="date"
+                            type="number"
+                            scale="time"
+                            domain={['dataMin', 'dataMax']}
                             tick={{ fontSize: 12 }}
+                            tickFormatter={(timestamp) =>
+                                new Date(timestamp).toLocaleDateString(
+                                    'en-GB',
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                    }
+                                )
+                            }
                         />
-<YAxis
-    width={100}
-    domain={[
-        0,
-        (dataMax) => Math.ceil(dataMax * 1.2 / 100) * 100,
-    ]}
-    tickFormatter={(value) =>
-        `KES ${Number(value).toLocaleString()}`
-    }
-/>
+
+                        <YAxis
+                            width={100}
+                            domain={['auto', 'auto']}
+                            tickFormatter={(value) =>
+                                `KES ${Number(value).toLocaleString('en-KE')}`
+                            }
+                        />
 
                         <Tooltip
                             formatter={(value) => [
-                                `KES ${Number(value).toLocaleString()}`,
-                                'Investment Value',
+                                `KES ${Number(value).toLocaleString(
+                                    'en-KE',
+                                    {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }
+                                )}`,
+                                'Total Investment Value',
                             ]}
-                            labelFormatter={(label) => `Date: ${label}`}
+                            labelFormatter={(timestamp) =>
+                                `Date: ${new Date(timestamp).toLocaleString(
+                                    'en-GB'
+                                )}`
+                            }
                         />
 
-                        {investments.map((investment) => (
-                            <Line
-                                key={investment.id}
-                                type="monotone"
-                                dataKey={`investment_${investment.id}`}
-                                name={investment.name}
-                                connectNulls
-                                strokeWidth={2}
-                                dot={{ r: 5 }}
-                                activeDot={{ r: 7 }}
-                            />
-                        ))}
+                        <Line
+                            type="linear"
+                            dataKey="value"
+                            name="Total Investment Value"
+                            stroke="#16a34a"
+                            strokeWidth={3}
+                            dot={{ r: 5 }}
+                            activeDot={{ r: 8 }}
+                        />
+
                     </LineChart>
+
                 </ResponsiveContainer>
+
             </div>
         </div>
     );

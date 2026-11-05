@@ -163,3 +163,21 @@ class InvestmentValueHistory(models.Model):
 
     def __str__(self):
         return f"{self.investment.name} - {self.value} - {self.date}"
+
+class PortfolioValueHistory(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='portfolio_value_history'
+    )
+
+    value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.value}"

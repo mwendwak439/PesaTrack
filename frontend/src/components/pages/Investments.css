@@ -19,7 +19,7 @@
 }
 
 .summary-card h2 {
-    color: #176b50;
+    color: #1B7F3A;
     font-size: 22px;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .investment-card h4 {
-    color: #176b50;
+    color: #1B7F3A;
     font-size: 20px;
     margin-bottom: 15px;
 }
@@ -58,12 +58,12 @@
 }
 
 .investments-page h2 {
-    color: #176b50;
+    color: #1B7F3A;
     margin-bottom: 10px;
 }
 
 .investments-page h3 {
-    color: #176b50;
+    color: #1B7F3A;
     margin-top: 30px;
 }
 .investment-actions {
@@ -74,7 +74,7 @@
 
 
 .investment-form button {
-    background: #176b50;
+    background: #1B7F3A;
     color: white;
     border: none;
     padding: 11px 20px;
@@ -107,11 +107,11 @@
 
 .action-message {
     margin-top: 15px;
-    color: #176b50;
+    color: #1B7F3A;
 }
 
 .back-dashboard-button {
-    background: #176b50;
+    background: #1B7F3A;
     color: white;
     border: none;
     padding: 10px 18px;
@@ -119,14 +119,14 @@
     cursor: pointer;
     font-size: 14px;
     margin-bottom: 20px;
-    transition: background 0.2s ease;
+   transition: background 0.2s ease;
 }
 
 .back-dashboard-button:hover {
-    background: #12543f;
+    background: #16652F;
 }
 .invest-money-button {
-    background-color:#16a34a;
+    background-color:#1B7F3A;
     color: white;
     padding: 12px 24px;
     border: none;
@@ -139,7 +139,7 @@
 }
 
 .invest-money-button:hover {
-    background-color: #15803d;
+    background-color: #16652F;
     transform: translateY(-2px);
      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
 
@@ -149,7 +149,7 @@
     transform: translateY(0);
 }
 .withdraw-investment-button{
- background-color:#16a34a;
+ background-color:#1B7F3A;
     color: white;
     padding: 12px 24px;
     border: none;
@@ -160,3 +160,124 @@
     transition: all 0.3s ease;
     margin: 15px 0;
  }
+ 
+/* ========================================
+   DAY 8 - INVESTMENTS RESPONSIVENESS
+======================================== */
+
+/* Prevent horizontal overflow */
+.investments-page {
+    width: 100%;
+    min-width: 0;
+    padding: 20px;
+}
+
+.investment-summary,
+.investment-card,
+.investment-form {
+    min-width: 0;
+}
+
+/* Investment summary cards */
+.investment-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Investment cards */
+.investment-card {
+    width: 100%;
+    overflow-wrap: anywhere;
+}
+
+/* Investment actions */
+.investment-actions {
+    flex-wrap: wrap;
+}
+
+.investment-actions button {
+    min-width: 120px;
+}
+
+/* Investment forms */
+.investment-form input {
+    min-width: 0;
+    flex: 1 1 200px;
+}
+
+/* Tablet screens */
+@media (max-width: 900px) {
+    .investment-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .investment-card {
+        padding: 20px;
+    }
+}
+
+/* Mobile screens */
+@media (max-width: 600px) {
+    .investments-page {
+        padding: 12px;
+    }
+
+    .investment-summary {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .summary-card {
+        padding: 18px;
+    }
+
+    .investment-card {
+        padding: 18px;
+        margin: 15px 0;
+    }
+
+    .investment-card h4 {
+        font-size: 18px;
+    }
+
+    .investment-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .investment-actions button,
+    .investment-form button,
+    .invest-money-button,
+    .withdraw-investment-button,
+    .back-dashboard-button {
+        width: 100%;
+    }
+
+    .investment-form {
+        padding: 18px;
+    }
+
+    .investment-form form {
+        flex-direction: column;
+    }
+
+    .investment-form input {
+        width: 100%;
+        flex: auto;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+    .investments-page {
+        padding: 8px;
+    }
+
+    .investment-card,
+    .investment-form {
+        padding: 14px;
+    }
+
+    .summary-card h2 {
+        font-size: 20px;
+    }
+}

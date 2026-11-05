@@ -9,7 +9,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .models import Transaction, Investment, InvestmentActivity, InvestmentValueHistory
+from .models import Transaction, Investment, InvestmentActivity, InvestmentValueHistory,  PortfolioValueHistory
 from .serializers import TransactionSerializer, InvestmentSerializer
 from datetime import timedelta
 
@@ -37,6 +37,19 @@ def get_wallet_balance(user):
     withdrawals = activity_totals['withdrawals'] or Decimal('0.00')
 
     return income - expenses - deposits + withdrawals
+
+def record_portfolio_value(user):
+    total_value = Investment.objects.filter(
+        user=user
+    ).aggregate(
+        total=Sum('current_value')
+    )['total'] or Decimal('0.00')
+
+    PortfolioValueHistory.objects.create(
+        user=user,
+        value=total_value
+    )
+
 
 
 # --------------------------------
@@ -164,6 +177,8 @@ class InvestmentListCreateView(APIView):
                 date=timezone.localdate()
             )
 
+            record_portfolio_value(request.user)
+
         return Response({
             'message': 'Investment deposit successful.',
             'wallet_balance': str(get_wallet_balance(request.user)),
@@ -224,6 +239,7 @@ class InvestmentDepositView(APIView):
                 date=timezone.localdate()
             )
 
+        record_portfolio_value(request.user)
         return Response({
             'message': 'Deposit successful.',
             'wallet_balance': str(get_wallet_balance(request.user)),
@@ -282,8 +298,11 @@ class InvestmentWithdrawView(APIView):
                     Decimal('0.01'),
                     rounding=ROUND_HALF_UP
                 )
-
-                investment.amount_invested -= principal_reduction
+                investment.amount_invested = max(
+                    Decimal('0.00'),
+                    investment.amount_invested - principal_reduction
+                )
+                            
                 investment.current_value -= amount
 
             investment.save()
@@ -294,6 +313,7 @@ class InvestmentWithdrawView(APIView):
                 amount=amount,
                 date=timezone.localdate()
             )
+            record_portfolio_value(request.user)
 
         return Response({
             'message': 'Withdrawal successful.',
@@ -351,6 +371,7 @@ class PortfolioRateView(APIView):
             )
         })
 
+
 def update_investment_growth(user):
     today = timezone.localdate()
     portfolio = get_portfolio_rate(user)
@@ -359,6 +380,9 @@ def update_investment_growth(user):
     investments = Investment.objects.filter(user=user)
 
     with transaction.atomic():
+
+        growth_was_added = False
+
         for investment in investments.select_for_update():
 
             # First update: record the starting value.
@@ -405,6 +429,13 @@ def update_investment_growth(user):
                 date=today
             )
 
+            if daily_growth != Decimal('0.00'):
+                growth_was_added = True
+
+        # Record the combined portfolio value after growth.
+        if growth_was_added:
+            record_portfolio_value(user)
+
 class InvestmentHistoryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -437,3 +468,20 @@ class InvestmentHistoryView(APIView):
             'investment_name': investment.name,
             'history': data
         })
+class PortfolioHistoryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        history = PortfolioValueHistory.objects.filter(
+            user=request.user
+        ).order_by('created_at')
+
+        data = [
+            {
+                'date': item.created_at,
+                'value': str(item.value)
+            }
+            for item in history
+        ]
+
+        return Response(data)
